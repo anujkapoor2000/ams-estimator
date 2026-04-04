@@ -818,10 +818,10 @@ export default function App(){
         {tab==="sla"&&(<>
           <Section title="SLA Framework - Priority Matrix" icon="⚖️" accent={C.red}>
             <DT headers={["Priority","Definition","Response SLA","Resolution SLA","Penalty (per breach)","Credit Cap"]} rows={[
-              ["P1 - Critical","GW prod system down / major claims/policy impact","15 min","4 hrs","5% monthly fee","15% of monthly"],
+              ["P1 - Critical","GW prod system down or major claims or policy impact","15 min","4 hrs","5% monthly fee","15% of monthly"],
               ["P2 - High","Significant functionality impaired, workaround exists","30 min","8 hrs","2% monthly fee","10% of monthly"],
               ["P3 - Medium","Non-critical issue, limited user impact","2 hrs","24 hrs","1% monthly fee","5% of monthly"],
-              ["P4 - Low","Cosmetic / informational, no business impact","4 hrs","72 hrs","0.5% monthly fee","2% of monthly"],
+              ["P4 - Low","Cosmetic or informational, no business impact","4 hrs","72 hrs","0.5% monthly fee","2% of monthly"],
             ]}/>
             <div style={{marginTop:14,background:"#FFF7ED",border:"1px solid #FED7AA",borderRadius:8,padding:12}}>
               <div style={{fontWeight:700,color:C.amber,fontSize:11,marginBottom:5}}>Credit and Penalty Framework Rules</div>
@@ -840,8 +840,8 @@ export default function App(){
               ["Daily Stand-up","Daily","AMS Squad","Open incidents, blockers, sprint progress"],
               ["Weekly Service Report","Weekly","Client IT Lead","Incident volumes, SLA adherence, sprint velocity"],
               ["Monthly Service Review","Monthly","IT Director","SLA scorecard, credits, backlog, AI metrics"],
-              ["Quarterly Business Review","Quarterly","CIO / Exec Sponsor","Programme health, roadmap, value delivered"],
-              ["Annual Contract Review","Annually","Procurement / Legal","SLA renegotiation, scope changes, commercial terms"],
+              ["Quarterly Business Review","Quarterly","CIO or Exec Sponsor","Programme health, roadmap, value delivered"],
+              ["Annual Contract Review","Annually","Procurement or Legal","SLA renegotiation, scope changes, commercial terms"],
             ]}/>
           </Section>
         </>)}
@@ -849,7 +849,7 @@ export default function App(){
         {/* ── AI ── */}
         {tab==="ai"&&(<>
           <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:20}}>
-            <KPI label="Y1 AI Gain" value="8%" sub="Auto-triage & copilot" color={C.teal}/>
+            <KPI label="Y1 AI Gain" value="8%" sub="Auto-triage and copilot" color={C.teal}/>
             <KPI label="Y2 AI Gain" value="18%" sub="Predictive ops" color={C.green}/>
             <KPI label="Y3 AI Gain" value="28%" sub="Autonomous L2" color={C.purple}/>
             <KPI label="3-Yr Hrs Saved" value={(totalBaseHrs*3-annual.reduce((s,a)=>s+a.hrs,0)).toLocaleString()} sub="vs. no-AI baseline" color={C.blue}/>
