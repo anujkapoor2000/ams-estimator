@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { useEngagement } from "./useEngagement";
 import { exportToPptx, exportToPdf } from "./exportUtils";
 
@@ -117,6 +117,24 @@ function roleBreakdown(totalL2,totalL3,totalEnh,totalIntg){
 
 // ── UI Helpers ─────────────────────────────────────────────────────────────────
 function Section({title,icon,children,accent}){
+  // Pre-computed display strings — avoids any JSX prop concatenation issues
+  const dBlended     = sym + blended + "/hr";
+  const dContAmt     = sym + (contingencyAmt/1000).toFixed(0) + "K";
+  const dTotCost     = sym + (totalCost/1000000).toFixed(2) + "M";
+  const dKtLabel     = "KT Phase (" + ktMo + " mo)";
+  const dCalLabel    = "Calibration (" + calMo + " mo)";
+  const dSsLabel     = "Steady-State (Yr1 rem.)";
+  const dKtSub       = sym + Math.round(ktHrs*blended*(1+contingency/100)/1000) + "K · " + ktFTE + " FTEs";
+  const dCalSub      = sym + Math.round(calHrs*blended*(1+contingency/100)/1000) + "K";
+  const dSsSub       = sym + Math.round(ssHrs*blended*(1+contingency/100)/1000) + "K · " + ssFTE + " FTEs";
+  const dSpSub       = sprsYr + " sprints x " + spPS + " SP";
+  const dIntgSub     = intgs.length + " integ x 60 hrs";
+  const dContPct     = contingency + "%";
+  const dContSub3yr  = contingency + "% contingency = " + sym + (contingencyAmt/1000).toFixed(0) + "K";
+  const dContSubTot  = sym + (contingencyAmt/1000).toFixed(0) + "K total";
+  const dAISaved     = (totalBaseHrs*3 - annual.reduce((s,a)=>s+a.hrs,0)).toLocaleString();
+  const dKtMoSub     = "Months 1-" + ktMo + " incl. overhead";
+
   return(
     <div style={{background:C.white,borderRadius:12,border:"1px solid #E2E8F0",marginBottom:24,overflow:"hidden",boxShadow:"0 2px 8px rgba(0,48,135,0.07)"}}>
       <div style={{background:accent||C.blue,padding:"14px 20px",display:"flex",alignItems:"center",gap:10}}>
@@ -369,81 +387,44 @@ export default function App(){
         ))}
       </div>
 
-      {/* Persistence + Export bar */}
+            {/* Persistence + Export bar */}
       <div style={{background:C.white,borderBottom:"1px solid #E2E8F0",padding:"8px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8}}>
-
-        {/* Save / Load controls */}
         <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-          <div style={{display:"flex",alignItems:"center",gap:6}}>
-            <input
-              value={eng.engagementName}
-              onChange={e=>eng.setEngagementName(e.target.value)}
-              placeholder="Engagement name..."
-              style={{padding:"5px 10px",border:"1px solid #CBD5E0",borderRadius:6,fontSize:11,fontWeight:600,color:C.navy,outline:"none",minWidth:180}}
-            />
-          </div>
-          <button
-            onClick={()=>eng.save(appState)}
-            disabled={eng.isSaving}
-            style={{padding:"5px 14px",borderRadius:6,border:"2px solid "+C.green,background:eng.isSaving?C.green:eng.saveStatus==="saved"?C.green:C.white,color:eng.isSaving||eng.saveStatus==="saved"?C.white:C.green,fontWeight:700,fontSize:11,cursor:eng.isSaving?"wait":"pointer",transition:"all 0.2s"}}>
-            {eng.isSaving?"Saving...":eng.saveStatus==="saved"?"✓ Saved":eng.saveStatus==="error"?"✗ Error":"💾 Save"}
-          </button>
-          <button
-            onClick={async()=>{await eng.loadList();}}
-            disabled={eng.isLoading}
-            style={{padding:"5px 14px",borderRadius:6,border:"2px solid "+C.teal,background:eng.isLoading?C.teal:C.white,color:eng.isLoading?C.white:C.teal,fontWeight:700,fontSize:11,cursor:eng.isLoading?"wait":"pointer",transition:"all 0.2s"}}>
-            {eng.isLoading?"Loading...":"📂 Load"}
-          </button>
-          <button
-            onClick={eng.newEngagement}
-            style={{padding:"5px 14px",borderRadius:6,border:"2px solid #CBD5E0",background:C.white,color:C.mid,fontWeight:700,fontSize:11,cursor:"pointer"}}>
-            New
-          </button>
-          {eng.engagementId&&<span style={{fontSize:10,color:C.mid}}>ID: {eng.engagementId}</span>}
+          <input value={eng.engagementName} onChange={e=>eng.setEngagementName(e.target.value)} placeholder="Engagement name..." style={{padding:"5px 10px",border:"1px solid #CBD5E0",borderRadius:6,fontSize:11,fontWeight:600,color:C.navy,outline:"none",minWidth:180}}/>
+          <button onClick={()=>eng.save(appState)} style={{padding:"5px 14px",borderRadius:6,border:"2px solid "+C.green,background:eng.saveStatus==="saved"?C.green:C.white,color:eng.saveStatus==="saved"?C.white:C.green,fontWeight:700,fontSize:11,cursor:"pointer"}}>{eng.isSaving?"Saving...":eng.saveStatus==="saved"?"Saved":eng.saveStatus==="error"?"Error":"Save"}</button>
+          <button onClick={()=>eng.loadList()} style={{padding:"5px 14px",borderRadius:6,border:"2px solid "+C.teal,background:eng.isLoading?C.teal:C.white,color:eng.isLoading?C.white:C.teal,fontWeight:700,fontSize:11,cursor:"pointer"}}>{eng.isLoading?"Loading...":"Load"}</button>
+          <button onClick={eng.newEngagement} style={{padding:"5px 14px",borderRadius:6,border:"2px solid #CBD5E0",background:C.white,color:C.mid,fontWeight:700,fontSize:11,cursor:"pointer"}}>New</button>
+          {eng.engagementId&&(<span style={{fontSize:10,color:C.mid}}>{"ID: "+eng.engagementId}</span>)}
         </div>
-
-        {/* Export controls */}
         <div style={{display:"flex",alignItems:"center",gap:8}}>
           <span style={{fontSize:10,color:C.mid}}>Export:</span>
-          <button onClick={()=>doExport("pdf")} disabled={exporting!==null}
-            style={{padding:"5px 14px",borderRadius:6,border:"2px solid "+C.red,background:exporting==="pdf"?C.red:C.white,color:exporting==="pdf"?C.white:C.red,fontWeight:700,fontSize:11,cursor:exporting?"wait":"pointer",transition:"all 0.2s"}}>
-            {exporting==="pdf"?"Generating...":"PDF"}
-          </button>
-          <button onClick={()=>doExport("pptx")} disabled={exporting!==null}
-            style={{padding:"5px 14px",borderRadius:6,border:"2px solid "+C.blue,background:exporting==="pptx"?C.blue:C.white,color:exporting==="pptx"?C.white:C.blue,fontWeight:700,fontSize:11,cursor:exporting?"wait":"pointer",transition:"all 0.2s"}}>
-            {exporting==="pptx"?"Generating...":"PPTX"}
-          </button>
+          <button onClick={()=>doExport("pdf")} style={{padding:"5px 14px",borderRadius:6,border:"2px solid "+C.red,background:exporting==="pdf"?C.red:C.white,color:exporting==="pdf"?C.white:C.red,fontWeight:700,fontSize:11,cursor:"pointer"}}>{exporting==="pdf"?"Generating...":"PDF"}</button>
+          <button onClick={()=>doExport("pptx")} style={{padding:"5px 14px",borderRadius:6,border:"2px solid "+C.blue,background:exporting==="pptx"?C.blue:C.white,color:exporting==="pptx"?C.white:C.blue,fontWeight:700,fontSize:11,cursor:"pointer"}}>{exporting==="pptx"?"Generating...":"PPTX"}</button>
         </div>
       </div>
-
-      {/* Saved Engagements Panel */}
-      {eng.showList&&(
-        <div style={{background:C.navy,color:C.white,padding:"16px 20px",boxShadow:"0 4px 12px rgba(0,0,0,0.2)"}}>
-          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
-            <div style={{fontWeight:700,fontSize:13}}>Saved Engagements</div>
-            <button onClick={()=>eng.setShowList(false)} style={{background:"none",border:"none",color:"#93C5FD",cursor:"pointer",fontSize:16}}>✕</button>
-          </div>
-          {eng.savedList.length===0?(
-            <div style={{color:"#93C5FD",fontSize:11}}>No saved engagements yet. Use Save to store your current configuration.</div>
-          ):(
-            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:8}}>
-              {eng.savedList.map(e=>(<div key={e.id} style={{background:"rgba(255,255,255,0.08)",borderRadius:8,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+      {eng.showList&&(<div style={{background:C.navy,color:C.white,padding:"16px 20px",boxShadow:"0 4px 12px rgba(0,0,0,0.2)"}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
+          <div style={{fontWeight:700,fontSize:13}}>Saved Engagements</div>
+          <button onClick={()=>eng.setShowList(false)} style={{background:"none",border:"none",color:"#93C5FD",cursor:"pointer",fontSize:16,padding:"0 4px"}}>X</button>
+        </div>
+        {eng.savedList.length===0?(<div style={{color:"#93C5FD",fontSize:11}}>No saved engagements yet. Click Save to store your current configuration.</div>):(
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",gap:8}}>
+            {eng.savedList.map(e=>(
+              <div key={e.id} style={{background:"rgba(255,255,255,0.08)",borderRadius:8,padding:"10px 14px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                 <div>
                   <div style={{fontWeight:700,fontSize:12,color:C.white}}>{e.name}</div>
-                  {e.client_name&&<div style={{fontSize:10,color:"#FCD34D"}}>{e.client_name}{e.client_city?" | "+e.client_city:""}</div>}
-                  <div style={{fontSize:9,color:"#93C5FD",marginTop:2}}>{new Date(e.updated_at).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"})}</div>
+                  {e.client_name&&(<div style={{fontSize:10,color:"#FCD34D"}}>{e.client_name}{e.client_city?(" | "+e.client_city):""}</div>)}
+                  <div style={{fontSize:9,color:"#93C5FD",marginTop:2}}>{new Date(e.updated_at).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"})}</div>
                 </div>
                 <div style={{display:"flex",gap:6}}>
-                  <button onClick={async()=>{const p=await eng.loadOne(e.id);restoreState(p);}}
-                    style={{padding:"4px 12px",borderRadius:5,border:"1px solid #93C5FD",background:"transparent",color:"#93C5FD",fontWeight:700,fontSize:10,cursor:"pointer"}}>Load</button>
-                  <button onClick={()=>eng.deleteOne(e.id)}
-                    style={{padding:"4px 10px",borderRadius:5,border:"1px solid "+C.red,background:"transparent",color:C.red,fontWeight:700,fontSize:10,cursor:"pointer"}}>✕</button>
+                  <button onClick={()=>eng.loadOne(e.id).then(p=>restoreState(p))} style={{padding:"4px 12px",borderRadius:5,border:"1px solid #93C5FD",background:"transparent",color:"#93C5FD",fontWeight:700,fontSize:10,cursor:"pointer"}}>Load</button>
+                  <button onClick={()=>eng.deleteOne(e.id)} style={{padding:"4px 10px",borderRadius:5,border:"1px solid "+C.red,background:"transparent",color:C.red,fontWeight:700,fontSize:10,cursor:"pointer"}}>Del</button>
                 </div>
-              </div>))}
-            </div>
-          )}
-        </div>
-      )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>)}
 
       {/* Content */}
       <div style={{maxWidth:1140,margin:"0 auto",padding:"24px 16px"}}>
@@ -612,10 +593,10 @@ export default function App(){
         {tab==="team"&&(<>
           <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:20}}>
             <KPI label="Total Programme FTEs" value={totalFTE} sub="Steady-state (before AI)" color={C.blue}/>
-            <KPI label="KT Phase FTEs" value={ktFTE} sub={"Months 1-"+ktMo+" incl. overhead"} color={C.amber}/>
+            <KPI label="KT Phase FTEs" value={ktFTE} sub={dKtMoSub} color={C.amber}/>
             <KPI label="Steady-State FTEs" value={ssFTE} sub="Post-calibration" color={C.green}/>
-            <KPI label="Blended Rate" value={sym+blended+"/hr"} sub="Weighted across all locations" color={C.navy}/>
-            <KPI label="Contingency" value={contingency+"%"} sub={sym+(contingencyAmt/1000).toFixed(0)+"K over 3 years"} color={C.orange}/>
+            <KPI label="Blended Rate" value={dBlended} sub="Weighted across all locations" color={C.navy}/>
+            <KPI label="Contingency" value={dContPct} sub={dContAmt + " over 3 years"} color={C.orange}/>
           </div>
 
           <Section title="Location Split & Individual Rates" icon="🌍">
@@ -682,28 +663,28 @@ export default function App(){
         {/* ── ESTIMATION ── */}
         {tab==="estimation"&&(<>
           <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:20}}>
-            <KPI label="Total Annual Hrs Base" value={totalBaseHrs.toLocaleString()} sub="Before AI gains" color={C.blue}/>
-            <KPI label="Total FTEs" value={totalFTE} sub="Blended: "+sym+blended+"per hr" color={C.navy}/>
-            <KPI label="Enhancement SP per yr" value={(spPS*sprsYr).toLocaleString()} sub={sprsYr+" sprints x "+spPS+" SP"} color={C.green}/>
-            <KPI label="Integration Hrs" value={intgHrs} sub={intgs.length+" integ x 60 hrs"} color={C.teal}/>
-            <KPI label="Contingency" value={contingency+"%"} sub={sym+(contingencyAmt/1000).toFixed(0)+"K total" } color={C.orange}/>
+            <KPI label="Total Annual Hrs (Base)" value={totalBaseHrs.toLocaleString()} sub="Before AI gains" color={C.blue}/>
+            <KPI label="Total FTEs" value={totalFTE} sub={"Blended: " + dBlended} color={C.navy}/>
+            <KPI label="Enhancement SP/yr" value={(spPS*sprsYr).toLocaleString()} sub={dSpSub} color={C.green}/>
+            <KPI label="Integration Hrs" value={intgHrs} sub={dIntgSub} color={C.teal}/>
+            <KPI label="Contingency" value={dContPct} sub={dContSubTot} color={C.orange}/>
           </div>
           <div style={{background:"#EFF6FF",border:"1px solid #BFDBFE",borderRadius:8,padding:"10px 14px",marginBottom:18,fontSize:12,color:C.darkGray}}>
             <strong style={{color:C.blue}}>Active Parameters:</strong> L2 avg <strong>{avgL2} hrs/ticket</strong> · L3 avg <strong>{avgL3} hrs/ticket</strong> · <strong>{tktMo} tickets/month</strong> · Coverage: <strong>{coverage.label}</strong> · Contingency: <strong>{contingency}%</strong>
           </div>
-          <Section title="Module Level Incident Effort -Annual Base" icon="📦">
+          <Section title="Module-Level Incident Effort (Annual Base)" icon="📦">
             <DT headers={["Module","L2 Tickets/yr","L2 Hrs","L3 Tickets/yr","L3 Hrs","Total Inc. Hrs","FTEs","Approx Cost/yr"]}
               rows={mods.map(m=>{const d=base.byModule[m];if(!d)return[m,"-","-","-","-","-","-","-"];const t=d.l2hrs+d.l3hrs;const fte=t/FTE_HRS;return[m,d.l2vol,d.l2hrs.toLocaleString(),d.l3vol,d.l3hrs.toLocaleString(),t.toLocaleString(),(fte).toFixed(1),sym+Math.round(fte*blended*FTE_HRS/1000)+"K"];})}/>
           </Section>
-          <Section title="Enhancement Delivery and Integration AMS" icon="🚀" accent={C.green}>
+          <Section title="Enhancement Delivery & Integration AMS" icon="🚀" accent={C.green}>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}}>
               <DT headers={["Parameter","Value"]} rows={[
                 ["Sprint Cadence","Fortnightly (2-week)"],
-                ["Sprints per Year",sprsYr],["Story Points per Sprint",spPS],
-                ["Total SP per Year",spPS*sprsYr],["Hours per Story Point",SP_HRS+" hrs"],
-                ["Enhancement Hrs per Year",base.totalEnhancement.toLocaleString()],
+                ["Sprints per Year",sprsYr],["Story Points / Sprint",spPS],
+                ["Total SP / Year",spPS*sprsYr],["Hours / Story Point",SP_HRS+" hrs"],
+                ["Enhancement Hrs / Year",base.totalEnhancement.toLocaleString()],
                 ["Enhancement FTEs",(base.totalEnhancement/FTE_HRS).toFixed(1)],
-                ["Enh Cost per yr",sym+Math.round((base.totalEnhancement/FTE_HRS)*blended*FTE_HRS/1000)+"K"],
+                ["Enh Cost/yr",sym+Math.round((base.totalEnhancement/FTE_HRS)*blended*FTE_HRS/1000)+"K"],
               ]}/>
               <DT headers={["Integration","Hrs/yr","FTEs","Cost/yr"]}
                 rows={[...intgs.map(i=>[i,60,(60/FTE_HRS).toFixed(2),sym+Math.round(60*blended/1000)+"K"]),["Total "+intgs.length+" integrations",intgHrs,(intgHrs/FTE_HRS).toFixed(1),sym+Math.round(intgHrs*blended/1000)+"K"]]}
@@ -715,16 +696,16 @@ export default function App(){
         {/* ── KT vs STEADY STATE ── */}
         {tab==="phases"&&(<>
           <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:20}}>
-            <KPI label={"KT Phase ("+ktMo+" mo)"} value={ktHrs.toLocaleString()+" hrs"} sub={sym+Math.round(ktHrs*blended*(1+contingency/100)/1000)+"K · "+ktFTE+" FTEs"} color={C.amber}/>
-            <KPI label={"Calibration ("+calMo+" mo)"} value={calHrs.toLocaleString()+" hrs"} sub={sym+Math.round(calHrs*blended*(1+contingency/100)/1000)+"K · "+(calHrs/FTE_HRS).toFixed(1)+" FTEs"} color={C.teal}/>
-            <KPI label={"Steady-State (Yr1 rem.)"} value={ssHrs.toLocaleString()+" hrs"} sub={sym+Math.round(ssHrs*blended*(1+contingency/100)/1000)+"K · "+ssFTE+" FTEs"} color={C.green}/>
+            <KPI label={dKtLabel} value={ktHrs.toLocaleString()+" hrs"} sub={dKtSub} color={C.amber}/>
+            <KPI label={dCalLabel} value={calHrs.toLocaleString()+" hrs"} sub={dCalSub} color={C.teal}/>
+            <KPI label={dSsLabel} value={ssHrs.toLocaleString()+" hrs"} sub={dSsSub} color={C.green}/>
             <KPI label="KT Overhead Applied" value={(KT_OVERHEAD*100)+"%"} sub="Shadowing & documentation burden" color={C.orange}/>
           </div>
 
           <Section title="Phase-by-Phase Cost & FTE Breakdown" icon="📅">
             <DT headers={["Phase","Period","Duration","Hours","FTEs","Base Cost","w/ Contingency","Notes"]}
               rows={[
-                ["KT and Mobilisation","Months 1-"+ktMo,ktMo+" months",ktHrs.toLocaleString(),ktFTE,sym+Math.round(ktHrs*blended/1000)+"K",sym+Math.round(ktHrs*blended*(1+contingency/100)/1000)+"K","Includes "+KT_OVERHEAD*100+"% overhead for shadowing & docs"],
+                ["KT / Mobilisation","Months 1-"+ktMo,ktMo+" months",ktHrs.toLocaleString(),ktFTE,sym+Math.round(ktHrs*blended/1000)+"K",sym+Math.round(ktHrs*blended*(1+contingency/100)/1000)+"K","Includes "+KT_OVERHEAD*100+"% overhead for shadowing & docs"],
                 ["Calibration","Months "+(ktMo+1)+"-"+(ktMo+calMo),calMo+" months",calHrs.toLocaleString(),(calHrs/FTE_HRS).toFixed(1),sym+Math.round(calHrs*blended/1000)+"K",sym+Math.round(calHrs*blended*(1+contingency/100)/1000)+"K","No SLA penalties — baseline tracking only"],
                 ["Steady-State Y1","Months "+(ktMo+calMo+1)+"-12",Math.max(0,12-ktMo-calMo)+" months",ssHrs.toLocaleString(),ssFTE,sym+Math.round(ssHrs*blended/1000)+"K",sym+Math.round(ssHrs*blended*(1+contingency/100)/1000)+"K","SLA credits/penalties active"],
                 ["Steady-State Y2","Months 13-24","12 months",annual[1].hrs.toLocaleString(),(annual[1].hrs/FTE_HRS).toFixed(1),sym+(annual[1].raw/1000).toFixed(0)+"K",sym+(annual[1].cost/1000).toFixed(0)+"K","AI savings: 18% vs baseline"],
@@ -781,7 +762,7 @@ export default function App(){
             {annual.map(a=>(
               <KPI key={a.y} label={"Year "+a.y+" Cost (incl. cont.)"} value={sym+(a.cost/1000).toFixed(0)+"K"} sub={a.hrs.toLocaleString()+" hrs · "+(a.hrs/FTE_HRS).toFixed(1)+" FTEs"} color={a.y===1?C.blue:a.y===2?C.teal:C.green}/>
             ))}
-            <KPI label="3-Year Total" value={sym+(totalCost/1000000).toFixed(2)+"M"} sub={contingency+"% contingency = "+sym+(contingencyAmt/1000).toFixed(0)+"K"} color={C.red}/>
+            <KPI label="3-Year Total" value={sym+(totalCost/1000000).toFixed(2)+"M"} sub={dContSub3yr} color={C.red}/>
           </div>
           <Section title="3-Year Cost Summary (incl. Contingency)" icon="📈">
             <DT headers={["Stream","Y1 Hrs","Y1 Base","Y1 w/Cont.","Y2 Hrs","Y2 Base","Y2 w/Cont.","Y3 Hrs","Y3 Base","Y3 w/Cont."]}
@@ -795,7 +776,7 @@ export default function App(){
           </Section>
           <Section title="Programme Milestones" icon="🗓" accent={C.navy}>
             {[
-              {phase:"Phase 0 - KT and Mobilisation",months:"Months 1-"+ktMo,color:C.amber,milestones:["Shadow current SI across all GW modules and integrations","Document runbooks, incident playbooks, Gosu code inventory","Onboard NTT DATA AMS team across all locations (Onsite+Offshore+Nearshore)","Establish tooling: ITSM, Jira, monitoring dashboards, GW Cloud access","Integration mapping and API catalogue for all "+intgs.length+" integrations","KT sign-off gate: knowledge assessment and runbook validation"]},
+              {phase:"Phase 0 - KT & Mobilisation",months:"Months 1-"+ktMo,color:C.amber,milestones:["Shadow current SI across all GW modules and integrations","Document runbooks, incident playbooks, Gosu code inventory","Onboard NTT DATA AMS team across all locations (Onsite+Offshore+Nearshore)","Establish tooling: ITSM, Jira, monitoring dashboards, GW Cloud access","Integration mapping and API catalogue for all "+intgs.length+" integrations","KT sign-off gate: knowledge assessment and runbook validation"]},
               {phase:"Phase 1 - Calibration",months:"Months "+(ktMo+1)+"-"+(ktMo+calMo),color:C.teal,milestones:["SLA measurement begins - no penalties in calibration window","Baseline incident volumes and resolution metrics established","First sprint of enhancements delivered to prove velocity","Integration health dashboards go live","Calibration review report - agreed baseline for SLA credits"]},
               {phase:"Year 1 - Steady-State",months:"Months "+(ktMo+calMo+1)+"-12",color:C.blue,milestones:["Full SLA accountability (P1-P4 credits/penalties active)","AI Incident Predictor v1 - reduces MTTR by ~15%","Gosu Copilot active for L3","Quarterly Business Reviews (QBRs)","Enhancement velocity: "+spPS+" SP/sprint sustained"]},
               {phase:"Year 2 - Optimise",months:"Months 13-24",color:C.green,milestones:["AI auto-triage covers 30%+ of L2","Shift-left from L2 to L1","GW Cloud upgrade support","Nearshore team fully ramped and independent","Tech Debt Radar: 100+ Gosu anti-patterns"]},
@@ -818,10 +799,10 @@ export default function App(){
         {tab==="sla"&&(<>
           <Section title="SLA Framework - Priority Matrix" icon="⚖️" accent={C.red}>
             <DT headers={["Priority","Definition","Response SLA","Resolution SLA","Penalty (per breach)","Credit Cap"]} rows={[
-              ["P1 - Critical","GW prod system down or major claims or policy impact","15 min","4 hrs","5% monthly fee","15% of monthly"],
+              ["P1 - Critical","GW prod system down / major claims/policy impact","15 min","4 hrs","5% monthly fee","15% of monthly"],
               ["P2 - High","Significant functionality impaired, workaround exists","30 min","8 hrs","2% monthly fee","10% of monthly"],
               ["P3 - Medium","Non-critical issue, limited user impact","2 hrs","24 hrs","1% monthly fee","5% of monthly"],
-              ["P4 - Low","Cosmetic or informational, no business impact","4 hrs","72 hrs","0.5% monthly fee","2% of monthly"],
+              ["P4 - Low","Cosmetic / informational, no business impact","4 hrs","72 hrs","0.5% monthly fee","2% of monthly"],
             ]}/>
             <div style={{marginTop:14,background:"#FFF7ED",border:"1px solid #FED7AA",borderRadius:8,padding:12}}>
               <div style={{fontWeight:700,color:C.amber,fontSize:11,marginBottom:5}}>Credit and Penalty Framework Rules</div>
@@ -836,12 +817,12 @@ export default function App(){
             <DT headers={["Integration","Monitoring","Alert SLA","Fix SLA (P2)","Escalation"]} rows={intgs.map(i=>[i,"24x7 automated","15 min","8 hrs","GW + Vendor bridge"])}/>
           </Section>
           <Section title="Governance & Reporting Cadence" icon="📋" accent={C.navy}>
-            <DT headers={["Report and Meeting","Frequency","Audience","Content"]} rows={[
+            <DT headers={["Report/Meeting","Frequency","Audience","Content"]} rows={[
               ["Daily Stand-up","Daily","AMS Squad","Open incidents, blockers, sprint progress"],
               ["Weekly Service Report","Weekly","Client IT Lead","Incident volumes, SLA adherence, sprint velocity"],
               ["Monthly Service Review","Monthly","IT Director","SLA scorecard, credits, backlog, AI metrics"],
-              ["Quarterly Business Review","Quarterly","CIO or Exec Sponsor","Programme health, roadmap, value delivered"],
-              ["Annual Contract Review","Annually","Procurement or Legal","SLA renegotiation, scope changes, commercial terms"],
+              ["Quarterly Business Review","Quarterly","CIO / Exec Sponsor","Programme health, roadmap, value delivered"],
+              ["Annual Contract Review","Annually","Procurement / Legal","SLA renegotiation, scope changes, commercial terms"],
             ]}/>
           </Section>
         </>)}
@@ -849,10 +830,10 @@ export default function App(){
         {/* ── AI ── */}
         {tab==="ai"&&(<>
           <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:20}}>
-            <KPI label="Y1 AI Gain" value="8%" sub="Auto-triage and copilot" color={C.teal}/>
+            <KPI label="Y1 AI Gain" value="8%" sub="Auto-triage & copilot" color={C.teal}/>
             <KPI label="Y2 AI Gain" value="18%" sub="Predictive ops" color={C.green}/>
             <KPI label="Y3 AI Gain" value="28%" sub="Autonomous L2" color={C.purple}/>
-            <KPI label="3-Yr Hrs Saved" value={(totalBaseHrs*3-annual.reduce((s,a)=>s+a.hrs,0)).toLocaleString()} sub="vs. no-AI baseline" color={C.blue}/>
+            <KPI label="3-Yr Hrs Saved" value={dAISaved} sub="vs. no-AI baseline" color={C.blue}/>
           </div>
           <Section title="AI Accelerator Roadmap" icon="🤖">
             {[
@@ -861,7 +842,7 @@ export default function App(){
               {name:"Incident Predictor",year:"Y1 Q3",color:C.purple,impact:"Medium",desc:"ML model predicts spike events (renewal season, month-end billing) and pre-scales capacity.",benefit:"Proactive staffing - avoids SLA breach during peaks."},
               {name:"AI Release Notes Summariser",year:"Y1 Q4",color:C.amber,impact:"Medium",desc:"Processes GW quarterly releases, generates per-module change impact assessments.",benefit:"Saves ~16 hrs per release cycle."},
               {name:"GW Test DataHub AI",year:"Y2 Q1",color:C.green,impact:"High",desc:"AI test data generation with GDPR/CDA masking. Supports Policy, Claim, Account entities.",benefit:"UAT setup time -60%. More SP per sprint."},
-              {name:"Autonomous L2 Agent",year:"Y3 Q1",color:C.red,impact:"Transformational",desc:"Agentic AI executes pre-approved runbooks for P3 and P4 incidents without human intervention.",benefit:"Handles 30-40% of L2 autonomously."},
+              {name:"Autonomous L2 Agent",year:"Y3 Q1",color:C.red,impact:"Transformational",desc:"Agentic AI executes pre-approved runbooks for P3/P4 incidents without human intervention.",benefit:"Handles 30-40% of L2 autonomously."},
             ].map(ai=>(
               <div key={ai.name} style={{border:"1px solid "+ai.color+"30",borderRadius:10,padding:14,marginBottom:12,borderLeft:"5px solid "+ai.color}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:6}}>
@@ -884,9 +865,9 @@ export default function App(){
               Team covers: {LOCATIONS.filter(l=>locSplit[l.key]>0).map(l=>l.flag+" "+l.label).join(", ")}
             </div>
             {[
-              {month:"Month 1",title:"Discovery and Shadow",color:C.amber,activities:["Onboard NTT DATA AMS team (all locations — Onsite + Offshore IN + Nearshore MX + MA)","Receive all documentation: runbooks, architecture docs, Gosu code repos from incumbent","Shadow incidents across PC, CC, BC, Digital — observe triage and resolution","Map all "+intgs.length+" integrations: endpoints, auth, data flows, error patterns","Establish GW Cloud access, ITSM credentials, monitoring tool access","Interview incumbent team: tribal knowledge capture sessions"],deliverable:"Discovery Report, Knowledge Gap Analysis, Onboarding Checklist"},
-              {month:"Month 2",title:"Runbook Creation and Parallel Operations",color:C.teal,activities:["NTT DATA authors runbooks for top 50 incident patterns per module","Gosu code walkthrough: all custom extensions, business rules, plugins","Integration runbooks: error resolution for each of "+intgs.length+" integrations","First NTT DATA-led incident resolutions (with incumbent oversight)","Enhancement process walkthrough: backlog grooming, sprint delivery, GW Cloud deploy","Training completion: GW Cloud ops certification for L2/L3 team (all locations)"],deliverable:"50 Runbooks, Integration Playbooks, Training Completion Report"},
-              {month:"Month 3",title:"Primary Accountability and KT Sign-Off",color:C.green,activities:["NTT DATA takes primary incident ownership across all modules","Incumbent available on advisory basis only (escalation backstop)","First sprint of enhancement delivery completed and demonstrated","KT Assessment: knowledge quiz, incident simulation exercise","Integration monitoring fully transitioned to NTT DATA dashboards","KT Sign-Off Gate: client + NTT DATA + incumbent agreement"],deliverable:"KT Sign-Off Certificate, Full Runbook Library, Go/No-Go Assessment"},
+              {month:"Month 1",title:"Discovery & Shadow",color:C.amber,activities:["Onboard NTT DATA AMS team (all locations — Onsite + Offshore IN + Nearshore MX + MA)","Receive all documentation: runbooks, architecture docs, Gosu code repos from incumbent","Shadow incidents across PC, CC, BC, Digital — observe triage and resolution","Map all "+intgs.length+" integrations: endpoints, auth, data flows, error patterns","Establish GW Cloud access, ITSM credentials, monitoring tool access","Interview incumbent team: tribal knowledge capture sessions"],deliverable:"Discovery Report, Knowledge Gap Analysis, Onboarding Checklist"},
+              {month:"Month 2",title:"Runbook Creation & Parallel Operations",color:C.teal,activities:["NTT DATA authors runbooks for top 50 incident patterns per module","Gosu code walkthrough: all custom extensions, business rules, plugins","Integration runbooks: error resolution for each of "+intgs.length+" integrations","First NTT DATA-led incident resolutions (with incumbent oversight)","Enhancement process walkthrough: backlog grooming, sprint delivery, GW Cloud deploy","Training completion: GW Cloud ops certification for L2/L3 team (all locations)"],deliverable:"50 Runbooks, Integration Playbooks, Training Completion Report"},
+              {month:"Month 3",title:"Primary Accountability + KT Sign-Off",color:C.green,activities:["NTT DATA takes primary incident ownership across all modules","Incumbent available on advisory basis only (escalation backstop)","First sprint of enhancement delivery completed and demonstrated","KT Assessment: knowledge quiz, incident simulation exercise","Integration monitoring fully transitioned to NTT DATA dashboards","KT Sign-Off Gate: client + NTT DATA + incumbent agreement"],deliverable:"KT Sign-Off Certificate, Full Runbook Library, Go/No-Go Assessment"},
             ].slice(0,ktMo).map(m=>(
               <div key={m.month} style={{marginBottom:18,borderLeft:"4px solid "+m.color,paddingLeft:14}}>
                 <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6}}>
@@ -902,7 +883,7 @@ export default function App(){
           </Section>
           <Section title={"Calibration Period - "+calMo+" Months"} icon="🎯" accent={C.navy}>
             <div style={{background:"#F0FFF4",border:"1px solid #86EFAC",borderRadius:8,padding:12,marginBottom:14,fontSize:11,color:C.darkGray,lineHeight:1.7}}>
-              Calibration (Months {ktMo+1}-{ktMo+calMo}): SLA tracked but <strong>no credits and penalties</strong>.
+              Calibration (Months {ktMo+1}-{ktMo+calMo}): SLA tracked but <strong>no credits/penalties</strong>.
               Establishes agreed performance baseline. SLA live Month {ktMo+calMo+1}.
             </div>
             <DT headers={["Calibration Activity","Owner","When"]} rows={[
@@ -918,9 +899,9 @@ export default function App(){
             <DT headers={["Risk","Likelihood","Impact","Mitigation"]} rows={[
               ["Incumbent SI non-cooperation","Medium","High","Contractual KT obligations; weekly progress reviews with client"],
               ["Gosu code undocumented — tribal knowledge only","High","High","Code archaeology sessions; NTT DATA Gosu Copilot assists discovery"],
-              ["Integration credentials or access delays","Medium","Medium","Early access request; parallel credential provisioning Month 1"],
+              ["Integration credentials / access delays","Medium","Medium","Early access request; parallel credential provisioning Month 1"],
               ["Volume underestimate (incidents higher than baseline)","Medium","Medium","30% calibration buffer; agree true-up mechanism"],
-              ["Offshore vs nearshore team ramp delay","Medium","Medium","2-week pre-boarding; local leads hired before go-live"],
+              ["Offshore/nearshore team ramp delay","Medium","Medium","2-week pre-boarding; local leads hired before go-live"],
               ["Key resource attrition during KT","Low","High","2x coverage per role; docs prevent single-dependency"],
             ]}/>
           </Section>
