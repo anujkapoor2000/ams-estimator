@@ -1,8 +1,16 @@
 // api/engagements.js
-// Vercel Serverless Function (Node.js runtime - default)
-// Uses @vercel/postgres — POSTGRES_URL env var set automatically by Vercel Postgres integration
+// Vercel Serverless Function — Neon serverless driver
+// Required env var: DATABASE_URL  (from your Neon project dashboard)
+// npm install @neondatabase/serverless
 
-import { sql } from "@vercel/postgres";
+import { neon } from "@neondatabase/serverless";
+
+function getDb() {
+  if (!process.env.DATABASE_URL) {
+    throw new Error("DATABASE_URL environment variable is not set");
+  }
+  return neon(process.env.DATABASE_URL);
+}
 
 async function ensureTable() {
   await sql`
