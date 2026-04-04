@@ -397,7 +397,7 @@ export default function App(){
           <button
             onClick={eng.newEngagement}
             style={{padding:"5px 14px",borderRadius:6,border:"2px solid #CBD5E0",background:C.white,color:C.mid,fontWeight:700,fontSize:11,cursor:"pointer"}}>
-            + New
+            New
           </button>
           {eng.engagementId&&<span style={{fontSize:10,color:C.mid}}>ID: {eng.engagementId}</span>}
         </div>
