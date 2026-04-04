@@ -1,11 +1,8 @@
 // api/engagements.js
-// Vercel Serverless Function — handles GET (list/fetch) and POST (save)
-// Uses @vercel/postgres which connects to your Vercel Postgres (Neon) database
-// Environment variable required: POSTGRES_URL (set automatically by Vercel Postgres integration)
+// Vercel Serverless Function (Node.js runtime - default)
+// Uses @vercel/postgres — POSTGRES_URL env var set automatically by Vercel Postgres integration
 
 import { sql } from "@vercel/postgres";
-
-export const config = { runtime: "edge" };
 
 async function ensureTable() {
   await sql`
@@ -20,15 +17,23 @@ async function ensureTable() {
   `;
 }
 
-export default async function handler(req) {
+export default async function handler(req, res) {
+  // CORS headers
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+
+  if (req.method === "OPTIONS") {
+    return res.status(200).end();
+  }
+
   try {
     await ensureTable();
 
-    // ── GET /api/engagements          → list all (summary)
-    // ── GET /api/engagements?id=xxx   → fetch one full payload
+    // GET /api/engagements          → list all (summary)
+    // GET /api/engagements?id=xxx   → fetch one full payload
     if (req.method === "GET") {
-      const url = new URL(req.url);
-      const id = url.searchParams.get("id");
+      const { id } = req.query;
 
       if (id) {
         const { rows } = await sql`
@@ -36,45 +41,33 @@ export default async function handler(req) {
           FROM engagements WHERE id = ${id}
         `;
         if (rows.length === 0) {
-          return new Response(JSON.stringify({ error: "Not found" }), {
-            status: 404,
-            headers: { "Content-Type": "application/json" },
-          });
+          return res.status(404).json({ error: "Not found" });
         }
-        return new Response(JSON.stringify(rows[0]), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        });
+        return res.status(200).json(rows[0]);
       }
 
-      // List all — return summary only (no full payload)
       const { rows } = await sql`
         SELECT id, name, client_name, client_city, updated_at
         FROM engagements
         ORDER BY updated_at DESC
         LIMIT 50
       `;
-      return new Response(JSON.stringify({ engagements: rows }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
+      return res.status(200).json({ engagements: rows });
     }
 
-    // ── POST /api/engagements → upsert (create or update)
+    // POST /api/engagements → upsert
     if (req.method === "POST") {
-      const body = await req.json();
-      const { id, name, clientName, clientCity, payload } = body;
+      const { id, name, clientName, clientCity, payload } = req.body;
 
       if (!id || !name || !payload) {
-        return new Response(
-          JSON.stringify({ error: "id, name and payload are required" }),
-          { status: 400, headers: { "Content-Type": "application/json" } }
-        );
+        return res.status(400).json({ error: "id, name and payload are required" });
       }
+
+      const payloadStr = JSON.stringify(payload);
 
       await sql`
         INSERT INTO engagements (id, name, client_name, client_city, updated_at, payload)
-        VALUES (${id}, ${name}, ${clientName || null}, ${clientCity || null}, NOW(), ${JSON.stringify(payload)})
+        VALUES (${id}, ${name}, ${clientName || null}, ${clientCity || null}, NOW(), ${payloadStr}::jsonb)
         ON CONFLICT (id) DO UPDATE SET
           name        = EXCLUDED.name,
           client_name = EXCLUDED.client_name,
@@ -83,38 +76,23 @@ export default async function handler(req) {
           payload     = EXCLUDED.payload
       `;
 
-      return new Response(JSON.stringify({ success: true, id }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
+      return res.status(200).json({ success: true, id });
     }
 
-    // ── DELETE /api/engagements?id=xxx
+    // DELETE /api/engagements?id=xxx
     if (req.method === "DELETE") {
-      const url = new URL(req.url);
-      const id = url.searchParams.get("id");
+      const { id } = req.query;
       if (!id) {
-        return new Response(JSON.stringify({ error: "id required" }), {
-          status: 400,
-          headers: { "Content-Type": "application/json" },
-        });
+        return res.status(400).json({ error: "id required" });
       }
       await sql`DELETE FROM engagements WHERE id = ${id}`;
-      return new Response(JSON.stringify({ success: true }), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      });
+      return res.status(200).json({ success: true });
     }
 
-    return new Response(JSON.stringify({ error: "Method not allowed" }), {
-      status: 405,
-      headers: { "Content-Type": "application/json" },
-    });
+    return res.status(405).json({ error: "Method not allowed" });
+
   } catch (err) {
     console.error("API error:", err);
-    return new Response(
-      JSON.stringify({ error: "Internal server error", detail: err.message }),
-      { status: 500, headers: { "Content-Type": "application/json" } }
-    );
+    return res.status(500).json({ error: "Internal server error", detail: err.message });
   }
 }
