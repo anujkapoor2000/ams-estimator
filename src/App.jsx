@@ -682,7 +682,7 @@ export default function App(){
         {/* ── ESTIMATION ── */}
         {tab==="estimation"&&(<>
           <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:20}}>
-            <KPI label="Total Annual Hrs (Base)" value={totalBaseHrs.toLocaleString()} sub="Before AI gains" color={C.blue}/>
+            <KPI label="Total Annual Hrs -Base" value={totalBaseHrs.toLocaleString()} sub="Before AI gains" color={C.blue}/>
             <KPI label="Total FTEs" value={totalFTE} sub="Blended: "+sym+blended+"per hr" color={C.navy}/>
             <KPI label="Enhancement SP per yr" value={(spPS*sprsYr).toLocaleString()} sub={sprsYr+" sprints x "+spPS+" SP"} color={C.green}/>
             <KPI label="Integration Hrs" value={intgHrs} sub={intgs.length+" integ x 60 hrs"} color={C.teal}/>
@@ -691,11 +691,11 @@ export default function App(){
           <div style={{background:"#EFF6FF",border:"1px solid #BFDBFE",borderRadius:8,padding:"10px 14px",marginBottom:18,fontSize:12,color:C.darkGray}}>
             <strong style={{color:C.blue}}>Active Parameters:</strong> L2 avg <strong>{avgL2} hrs/ticket</strong> · L3 avg <strong>{avgL3} hrs/ticket</strong> · <strong>{tktMo} tickets/month</strong> · Coverage: <strong>{coverage.label}</strong> · Contingency: <strong>{contingency}%</strong>
           </div>
-          <Section title="Module-Level Incident Effort (Annual Base)" icon="📦">
+          <Section title="Module Level Incident Effort -Annual Base" icon="📦">
             <DT headers={["Module","L2 Tickets/yr","L2 Hrs","L3 Tickets/yr","L3 Hrs","Total Inc. Hrs","FTEs","Approx Cost/yr"]}
               rows={mods.map(m=>{const d=base.byModule[m];if(!d)return[m,"-","-","-","-","-","-","-"];const t=d.l2hrs+d.l3hrs;const fte=t/FTE_HRS;return[m,d.l2vol,d.l2hrs.toLocaleString(),d.l3vol,d.l3hrs.toLocaleString(),t.toLocaleString(),(fte).toFixed(1),sym+Math.round(fte*blended*FTE_HRS/1000)+"K"];})}/>
           </Section>
-          <Section title="Enhancement Delivery & Integration AMS" icon="🚀" accent={C.green}>
+          <Section title="Enhancement Delivery and Integration AMS" icon="🚀" accent={C.green}>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}}>
               <DT headers={["Parameter","Value"]} rows={[
                 ["Sprint Cadence","Fortnightly (2-week)"],
