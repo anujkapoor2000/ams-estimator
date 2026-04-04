@@ -2,7 +2,7 @@
 // Custom hook — wraps all API calls for saving/loading engagements
 // The app state is serialised to JSON and stored in Vercel Postgres via /api/engagements
 
-import { useState, useCallback } from "react";
+import { useState } from "react";
 
 const API = "/api/engagements";
 
