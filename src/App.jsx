@@ -683,8 +683,8 @@ export default function App(){
         {tab==="estimation"&&(<>
           <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:20}}>
             <KPI label="Total Annual Hrs (Base)" value={totalBaseHrs.toLocaleString()} sub="Before AI gains" color={C.blue}/>
-            <KPI label="Total FTEs" value={totalFTE} sub="Blended: "+sym+blended+"/hr" color={C.navy}/>
-            <KPI label="Enhancement SP/yr" value={(spPS*sprsYr).toLocaleString()} sub={sprsYr+" sprints x "+spPS+" SP"} color={C.green}/>
+            <KPI label="Total FTEs" value={totalFTE} sub="Blended: "+sym+blended+"per hr" color={C.navy}/>
+            <KPI label="Enhancement SP per yr" value={(spPS*sprsYr).toLocaleString()} sub={sprsYr+" sprints x "+spPS+" SP"} color={C.green}/>
             <KPI label="Integration Hrs" value={intgHrs} sub={intgs.length+" integ x 60 hrs"} color={C.teal}/>
             <KPI label="Contingency" value={contingency+"%"} sub={sym+(contingencyAmt/1000).toFixed(0)+"K total" } color={C.orange}/>
           </div>
@@ -699,11 +699,11 @@ export default function App(){
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20}}>
               <DT headers={["Parameter","Value"]} rows={[
                 ["Sprint Cadence","Fortnightly (2-week)"],
-                ["Sprints per Year",sprsYr],["Story Points / Sprint",spPS],
-                ["Total SP / Year",spPS*sprsYr],["Hours / Story Point",SP_HRS+" hrs"],
-                ["Enhancement Hrs / Year",base.totalEnhancement.toLocaleString()],
+                ["Sprints per Year",sprsYr],["Story Points per Sprint",spPS],
+                ["Total SP per Year",spPS*sprsYr],["Hours per Story Point",SP_HRS+" hrs"],
+                ["Enhancement Hrs per Year",base.totalEnhancement.toLocaleString()],
                 ["Enhancement FTEs",(base.totalEnhancement/FTE_HRS).toFixed(1)],
-                ["Enh Cost/yr",sym+Math.round((base.totalEnhancement/FTE_HRS)*blended*FTE_HRS/1000)+"K"],
+                ["Enh Cost per yr",sym+Math.round((base.totalEnhancement/FTE_HRS)*blended*FTE_HRS/1000)+"K"],
               ]}/>
               <DT headers={["Integration","Hrs/yr","FTEs","Cost/yr"]}
                 rows={[...intgs.map(i=>[i,60,(60/FTE_HRS).toFixed(2),sym+Math.round(60*blended/1000)+"K"]),["Total "+intgs.length+" integrations",intgHrs,(intgHrs/FTE_HRS).toFixed(1),sym+Math.round(intgHrs*blended/1000)+"K"]]}
@@ -724,7 +724,7 @@ export default function App(){
           <Section title="Phase-by-Phase Cost & FTE Breakdown" icon="📅">
             <DT headers={["Phase","Period","Duration","Hours","FTEs","Base Cost","w/ Contingency","Notes"]}
               rows={[
-                ["KT / Mobilisation","Months 1-"+ktMo,ktMo+" months",ktHrs.toLocaleString(),ktFTE,sym+Math.round(ktHrs*blended/1000)+"K",sym+Math.round(ktHrs*blended*(1+contingency/100)/1000)+"K","Includes "+KT_OVERHEAD*100+"% overhead for shadowing & docs"],
+                ["KT and Mobilisation","Months 1-"+ktMo,ktMo+" months",ktHrs.toLocaleString(),ktFTE,sym+Math.round(ktHrs*blended/1000)+"K",sym+Math.round(ktHrs*blended*(1+contingency/100)/1000)+"K","Includes "+KT_OVERHEAD*100+"% overhead for shadowing & docs"],
                 ["Calibration","Months "+(ktMo+1)+"-"+(ktMo+calMo),calMo+" months",calHrs.toLocaleString(),(calHrs/FTE_HRS).toFixed(1),sym+Math.round(calHrs*blended/1000)+"K",sym+Math.round(calHrs*blended*(1+contingency/100)/1000)+"K","No SLA penalties — baseline tracking only"],
                 ["Steady-State Y1","Months "+(ktMo+calMo+1)+"-12",Math.max(0,12-ktMo-calMo)+" months",ssHrs.toLocaleString(),ssFTE,sym+Math.round(ssHrs*blended/1000)+"K",sym+Math.round(ssHrs*blended*(1+contingency/100)/1000)+"K","SLA credits/penalties active"],
                 ["Steady-State Y2","Months 13-24","12 months",annual[1].hrs.toLocaleString(),(annual[1].hrs/FTE_HRS).toFixed(1),sym+(annual[1].raw/1000).toFixed(0)+"K",sym+(annual[1].cost/1000).toFixed(0)+"K","AI savings: 18% vs baseline"],
@@ -795,7 +795,7 @@ export default function App(){
           </Section>
           <Section title="Programme Milestones" icon="🗓" accent={C.navy}>
             {[
-              {phase:"Phase 0 - KT & Mobilisation",months:"Months 1-"+ktMo,color:C.amber,milestones:["Shadow current SI across all GW modules and integrations","Document runbooks, incident playbooks, Gosu code inventory","Onboard NTT DATA AMS team across all locations (Onsite+Offshore+Nearshore)","Establish tooling: ITSM, Jira, monitoring dashboards, GW Cloud access","Integration mapping and API catalogue for all "+intgs.length+" integrations","KT sign-off gate: knowledge assessment and runbook validation"]},
+              {phase:"Phase 0 - KT and Mobilisation",months:"Months 1-"+ktMo,color:C.amber,milestones:["Shadow current SI across all GW modules and integrations","Document runbooks, incident playbooks, Gosu code inventory","Onboard NTT DATA AMS team across all locations (Onsite+Offshore+Nearshore)","Establish tooling: ITSM, Jira, monitoring dashboards, GW Cloud access","Integration mapping and API catalogue for all "+intgs.length+" integrations","KT sign-off gate: knowledge assessment and runbook validation"]},
               {phase:"Phase 1 - Calibration",months:"Months "+(ktMo+1)+"-"+(ktMo+calMo),color:C.teal,milestones:["SLA measurement begins - no penalties in calibration window","Baseline incident volumes and resolution metrics established","First sprint of enhancements delivered to prove velocity","Integration health dashboards go live","Calibration review report - agreed baseline for SLA credits"]},
               {phase:"Year 1 - Steady-State",months:"Months "+(ktMo+calMo+1)+"-12",color:C.blue,milestones:["Full SLA accountability (P1-P4 credits/penalties active)","AI Incident Predictor v1 - reduces MTTR by ~15%","Gosu Copilot active for L3","Quarterly Business Reviews (QBRs)","Enhancement velocity: "+spPS+" SP/sprint sustained"]},
               {phase:"Year 2 - Optimise",months:"Months 13-24",color:C.green,milestones:["AI auto-triage covers 30%+ of L2","Shift-left from L2 to L1","GW Cloud upgrade support","Nearshore team fully ramped and independent","Tech Debt Radar: 100+ Gosu anti-patterns"]},
@@ -836,7 +836,7 @@ export default function App(){
             <DT headers={["Integration","Monitoring","Alert SLA","Fix SLA (P2)","Escalation"]} rows={intgs.map(i=>[i,"24x7 automated","15 min","8 hrs","GW + Vendor bridge"])}/>
           </Section>
           <Section title="Governance & Reporting Cadence" icon="📋" accent={C.navy}>
-            <DT headers={["Report/Meeting","Frequency","Audience","Content"]} rows={[
+            <DT headers={["Report and Meeting","Frequency","Audience","Content"]} rows={[
               ["Daily Stand-up","Daily","AMS Squad","Open incidents, blockers, sprint progress"],
               ["Weekly Service Report","Weekly","Client IT Lead","Incident volumes, SLA adherence, sprint velocity"],
               ["Monthly Service Review","Monthly","IT Director","SLA scorecard, credits, backlog, AI metrics"],
@@ -918,9 +918,9 @@ export default function App(){
             <DT headers={["Risk","Likelihood","Impact","Mitigation"]} rows={[
               ["Incumbent SI non-cooperation","Medium","High","Contractual KT obligations; weekly progress reviews with client"],
               ["Gosu code undocumented — tribal knowledge only","High","High","Code archaeology sessions; NTT DATA Gosu Copilot assists discovery"],
-              ["Integration credentials / access delays","Medium","Medium","Early access request; parallel credential provisioning Month 1"],
+              ["Integration credentials or access delays","Medium","Medium","Early access request; parallel credential provisioning Month 1"],
               ["Volume underestimate (incidents higher than baseline)","Medium","Medium","30% calibration buffer; agree true-up mechanism"],
-              ["Offshore/nearshore team ramp delay","Medium","Medium","2-week pre-boarding; local leads hired before go-live"],
+              ["Offshore vs nearshore team ramp delay","Medium","Medium","2-week pre-boarding; local leads hired before go-live"],
               ["Key resource attrition during KT","Low","High","2x coverage per role; docs prevent single-dependency"],
             ]}/>
           </Section>
