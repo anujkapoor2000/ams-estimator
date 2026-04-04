@@ -682,7 +682,7 @@ export default function App(){
         {/* ── ESTIMATION ── */}
         {tab==="estimation"&&(<>
           <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:20}}>
-            <KPI label="Total Annual Hrs -Base" value={totalBaseHrs.toLocaleString()} sub="Before AI gains" color={C.blue}/>
+            <KPI label="Total Annual Hrs Base" value={totalBaseHrs.toLocaleString()} sub="Before AI gains" color={C.blue}/>
             <KPI label="Total FTEs" value={totalFTE} sub="Blended: "+sym+blended+"per hr" color={C.navy}/>
             <KPI label="Enhancement SP per yr" value={(spPS*sprsYr).toLocaleString()} sub={sprsYr+" sprints x "+spPS+" SP"} color={C.green}/>
             <KPI label="Integration Hrs" value={intgHrs} sub={intgs.length+" integ x 60 hrs"} color={C.teal}/>
