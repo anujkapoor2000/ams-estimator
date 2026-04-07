@@ -14,7 +14,7 @@ const API      = "/api/engagements";
 
 function genId(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
 
-async function pbody(res){ try{ return await res.json(); }catch(){ return {}; } }
+async function pbody(res){ try{ return await res.json(); }catch(e){ return {}; } }
 async function apiSave(opp){
   const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json"},
     body:JSON.stringify({id:opp.id,name:opp.name,clientName:opp.client||"",clientCity:opp.clientCity||"",status:opp.status||"Draft",payload:opp})});
