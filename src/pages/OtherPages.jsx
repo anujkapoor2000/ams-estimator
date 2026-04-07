@@ -3,7 +3,7 @@
 
 import {T} from "../design.js";
 import {Card, Metric, SectionHead, Slider, Table, Badge, BarChart, ShoreBar, RaciBadge} from "../components/ui.jsx";
-import {LOCATIONS, ROLES, RISKS, AI_ACCELERATORS, AI_GAIN_CURVE, COVERAGE_OPTIONS, buildPlan, calcBase, blendedCostRate, blendedSellRate, getSellRate, splitFTE, FTE_HRS} from "../store/appData.js";
+import {LOCATIONS, ROLES, RISKS, DEFAULT_AI_ACCELERATORS, AI_GAIN_CURVE, COVERAGE_OPTIONS, buildPlan, calcBase, blendedCostRate, blendedSellRate, getSellRate, splitFTE, FTE_HRS} from "../store/appData.js";
 
 // ─── Analytics ────────────────────────────────────────────────────────────────
 export function AnalyticsPage({opp,opps,sym,fxRate,currency}){
@@ -254,7 +254,7 @@ export function AIPage({opp,sym,fxRate,currency}){
 
       {/* Accelerator cards */}
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
-        {AI_ACCELERATORS.map(ai=>{
+        {DEFAULT_AI_ACCELERATORS.map(ai=>{
           const col=impactColors[ai.impact]||T.blue;
           const gain=AI_GAIN_CURVE[Math.min(ai.gainIdx,AI_GAIN_CURVE.length-1)];
           return(

@@ -4,9 +4,9 @@ import { T, font } from "../design.js";
 import { Btn } from "./ui.jsx";
 import {
   MODULES, INTEGRATIONS, COVERAGE_OPTIONS, LOCATIONS, DELIVERY_CENTRES,
-  ROLES, RISKS, DEFAULT_AI_ACCELERATORS, buildPlan, buildAIGainCurve,
+  ROLES, RISKS, DEFAULT_AI_ACCELERATORS, AI_GAIN_CURVE, buildPlan,
   calcBase, blendedCostRate, blendedSellRate, getSellRate, splitFTE,
-  versionColor, FTE_HRS, KT_OVERHEAD,
+  FTE_HRS, VERSION_LABELS,
 } from "../store/appData.js";
 
 const STEPS=[{n:1,label:"Scope",icon:"📋"},{n:2,label:"Rates & Team",icon:"👥"},{n:3,label:"AI Accelerators",icon:"⚡"},{n:4,label:"Phases",icon:"📅"},{n:5,label:"Review",icon:"✅"}];
@@ -163,7 +163,7 @@ function Step4({data,onChange,sym,fxRate,currency}){
   const intgHrs=(data.intgs||[]).length*60;
   const blendC=blendedCostRate(data.ls,data.rates);
   const blendS=blendedSellRate(data.ls,data.rates,data.margins,data.fixedSell);
-  const aiCurve=buildAIGainCurve(data.accelerators,data.totalYrs);
+  const aiCurve=AI_GAIN_CURVE;
   const plan=buildPlan(base,intgHrs,data.ktMo,data.calMo,data.totalYrs,blendC,blendS,data.cont,aiCurve);
   const totSell=plan.reduce((s,r)=>s+r.sellWC,0);
   const totCost=plan.reduce((s,r)=>s+r.costWC,0);
@@ -200,7 +200,7 @@ function Step5({data,sym,fxRate,currency}){
   const intgHrs=(data.intgs||[]).length*60;
   const blendC=blendedCostRate(data.ls,data.rates);
   const blendS=blendedSellRate(data.ls,data.rates,data.margins,data.fixedSell);
-  const aiCurve=buildAIGainCurve(data.accelerators,data.totalYrs);
+  const aiCurve=AI_GAIN_CURVE;
   const plan=buildPlan(base,intgHrs,data.ktMo,data.calMo,data.totalYrs,blendC,blendS,data.cont,aiCurve);
   const totSell=plan.reduce((s,r)=>s+r.sellWC,0);
   const totCost=plan.reduce((s,r)=>s+r.costWC,0);
@@ -264,7 +264,7 @@ export default function OppWizard({opp,onClose,onSave,sym,fxRate,currency}){
       <div style={{background:T.white,borderRadius:20,boxShadow:"0 24px 80px rgba(13,27,62,0.22)",width:"100%",maxWidth:940,maxHeight:"94vh",display:"flex",flexDirection:"column",overflow:"hidden"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"16px 22px",borderBottom:`1px solid ${T.border}`}}>
           <div><div style={{fontSize:16,fontWeight:800,color:T.text,fontFamily:font.display}}>{data.name||"New Engagement"}</div><div style={{fontSize:11,color:T.textSoft}}>{data.client||"No client"}{data.clientCity?" · "+data.clientCity:""}</div></div>
-          <div style={{display:"flex",gap:8,alignItems:"center"}}><div style={{padding:"3px 10px",borderRadius:100,background:versionColor(data.version)+"20",color:versionColor(data.version),fontSize:10,fontWeight:700}}>{data.version||"Draft"}</div><button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",fontSize:20,color:T.textSoft,padding:"2px 6px"}}>×</button></div>
+          <div style={{display:"flex",gap:8,alignItems:"center"}}><div style={{padding:"3px 10px",borderRadius:100,background:({Draft:T.textSoft,V1:T.blue,V2:T.teal,Final:T.green}[data.version||"Draft"]||T.textSoft)+"20",color:({Draft:T.textSoft,V1:T.blue,V2:T.teal,Final:T.green}[data.version||"Draft"]||T.textSoft),fontSize:10,fontWeight:700}}>{data.version||"Draft"}</div><button onClick={onClose} style={{background:"none",border:"none",cursor:"pointer",fontSize:20,color:T.textSoft,padding:"2px 6px"}}>×</button></div>
         </div>
         <StepBar current={step} completed={completed}/>
         <div style={{flex:1,overflowY:"auto",padding:"22px 26px"}}>

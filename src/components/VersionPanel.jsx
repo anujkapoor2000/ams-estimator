@@ -2,7 +2,7 @@
 // Shows version history for the current opportunity with promote button
 import { useState, useEffect } from "react";
 import { T, font } from "../design.js";
-import { VERSION_LABELS, nextVersion, versionColor } from "../store/appData.js";
+import { VERSION_LABELS } from "../store/appData.js";
 import { Btn } from "./ui.jsx";
 
 export default function VersionPanel({opp,onPromote,onLoadVersion}){
@@ -21,10 +21,10 @@ export default function VersionPanel({opp,onPromote,onLoadVersion}){
 
   useEffect(()=>{if(open)fetchVersions();},[open,opp?.id]);
 
-  const next=nextVersion(opp?.version||"Draft");
+  const next=VERSION_LABELS[Math.min(VERSION_LABELS.indexOf(opp?.version||"Draft");
   const isAtFinal=opp?.version==="Final";
-  const col=versionColor(opp?.version||"Draft");
-  const nextCol=versionColor(next);
+  const col=({Draft:"#8B94B3",V1:"#4D93F8",V2:"#14B8A6",Final:"#10B981"}[opp?.version||"Draft");
+  const nextCol=({Draft:"#8B94B3",V1:"#4D93F8",V2:"#14B8A6",Final:"#10B981"}[next);
 
   return(
     <div style={{position:"relative"}}>
@@ -47,7 +47,7 @@ export default function VersionPanel({opp,onPromote,onLoadVersion}){
             <div style={{display:"flex",alignItems:"center",gap:4,marginBottom:10}}>
               {VERSION_LABELS.map((v,i)=>{
                 const done=VERSION_LABELS.indexOf(opp?.version||"Draft")>=i;
-                const vc=versionColor(v);
+                const vc=({Draft:"#8B94B3",V1:"#4D93F8",V2:"#14B8A6",Final:"#10B981"}[v);
                 return(<>
                   <div key={v} style={{display:"flex",alignItems:"center",gap:4}}>
                     <div style={{width:22,height:22,borderRadius:"50%",background:done?vc:T.border,display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,color:"white",fontWeight:700}}>
@@ -75,7 +75,7 @@ export default function VersionPanel({opp,onPromote,onLoadVersion}){
             :versions.length===0?<div style={{fontSize:11,color:T.textSoft,textAlign:"center",padding:8}}>No saved versions yet</div>
             :versions.map(v=>(
               <div key={v.id} style={{display:"flex",alignItems:"center",gap:8,padding:"6px 0",borderBottom:`1px solid ${T.border}`}}>
-                <div style={{width:24,height:24,borderRadius:6,background:versionColor(v.version_label)+"20",color:versionColor(v.version_label),display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,flexShrink:0}}>{v.version_label}</div>
+                <div style={{width:24,height:24,borderRadius:6,background:({Draft:"#8B94B3",V1:"#4D93F8",V2:"#14B8A6",Final:"#10B981"}[v.version_label)+"20",color:({Draft:"#8B94B3",V1:"#4D93F8",V2:"#14B8A6",Final:"#10B981"}[v.version_label),display:"flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,flexShrink:0}}>{v.version_label}</div>
                 <div style={{flex:1}}>
                   <div style={{fontSize:11,fontWeight:600,color:T.text}}>{v.version_label}</div>
                   <div style={{fontSize:9,color:T.textSoft}}>{new Date(v.saved_at).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"})}</div>
