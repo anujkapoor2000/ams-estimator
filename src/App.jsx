@@ -43,9 +43,10 @@ export default function App(){
   const [page,setPage]       = useState("opportunities");
   const [opps,setOpps]       = useState([]);
   const [activeId,setActiveId] = useState(null);
-  const [wizardOpp,setWizardOpp] = useState(null); // opp being edited in wizard
-  const [saving,setSaving]   = useState(false);
-  const [loading,setLoading] = useState(true);
+  const [wizardOpp,setWizardOpp] = useState(null);
+  const [saving,setSaving]     = useState(false);
+  const [exporting,setExporting] = useState(null);
+  const [loading,setLoading]   = useState(true);
   const [currency,setCurrency] = useState("USD");
   const [fxRate,setFxRate]   = useState(null);      // USD→GBP rate
   const [fxUpdated,setFxUpdated] = useState(null);
@@ -137,12 +138,15 @@ export default function App(){
 
   async function handleExport(type){
     if(!activeOpp){ alert("Please select an opportunity first."); return; }
+    setExporting(type);
     try{
       if(type==="pdf") await exportOppToPdf(activeOpp, currency, fxRate);
       else             await exportOppToPptx(activeOpp, currency, fxRate);
     }catch(err){
       console.error("Export error:", err);
-      alert("Export failed: "+err.message);
+      alert("Export failed — check browser console for details.\n\n"+err.message);
+    }finally{
+      setExporting(null);
     }
   }
 
@@ -182,7 +186,7 @@ export default function App(){
         <div style={{flex:1,display:"flex",flexDirection:"column",overflow:"hidden"}}>
           <Navbar
             page={page} opp={activeOpp}
-            onSave={handleSave} onExport={handleExport}
+            onSave={handleSave} onExport={handleExport} exporting={exporting}
             saving={saving} currency={currency}
             onCurrencyToggle={toggleCurrency}
             fxRate={fxRate} fxUpdated={fxUpdated}
