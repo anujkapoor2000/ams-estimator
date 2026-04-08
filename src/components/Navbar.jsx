@@ -9,7 +9,7 @@ const PAGE_TITLES = {
   kt:"KT & Steady State", raci:"RACI & Risk",
 };
 
-export default function Navbar({page,opp,onSave,onExport,saving,currency,onCurrencyToggle,fxRate,fxUpdated,fxLoading,onRefreshFx,onEdit}){
+export default function Navbar({page,opp,onSave,onExport,saving,currency,onCurrencyToggle,fxRate,fxUpdated,fxLoading,onRefreshFx,onEdit,exporting}){
   const isFx = currency==="GBP";
   return(
     <div style={{height:58,background:T.white,borderBottom:`1px solid ${T.border}`,display:"flex",alignItems:"center",padding:"0 20px",gap:12,position:"sticky",top:0,zIndex:90,boxShadow:"0 1px 4px rgba(13,27,62,0.05)",flexShrink:0}}>
@@ -40,8 +40,12 @@ export default function Navbar({page,opp,onSave,onExport,saving,currency,onCurre
         <Btn size="sm" variant="secondary" icon="✏️" onClick={onEdit}>Edit</Btn>
       )}
 
-      <Btn size="sm" variant="secondary" icon="⬇" onClick={()=>onExport("pdf")}>PDF</Btn>
-      <Btn size="sm" variant="secondary" icon="📊" onClick={()=>onExport("pptx")}>PPTX</Btn>
+      <Btn size="sm" variant={exporting==="pdf"?"primary":"secondary"} icon={exporting==="pdf"?"⏳":"⬇"} onClick={()=>!exporting&&onExport("pdf")} disabled={!!exporting}>
+        {exporting==="pdf"?"Generating...":"PDF"}
+      </Btn>
+      <Btn size="sm" variant={exporting==="pptx"?"primary":"secondary"} icon={exporting==="pptx"?"⏳":"📊"} onClick={()=>!exporting&&onExport("pptx")} disabled={!!exporting}>
+        {exporting==="pptx"?"Generating...":"PPTX"}
+      </Btn>
       <Btn size="sm" variant="primary" icon="✓" onClick={onSave} disabled={saving}>{saving?"Saving...":"Save"}</Btn>
     </div>
   );
