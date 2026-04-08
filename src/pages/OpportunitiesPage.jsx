@@ -15,7 +15,7 @@ function quickSell(o){
     const base=calcBase(o.mods,o.spS,o.spY,o.avgL2,o.avgL3,o.tkt);
     const intgHrs=(o.intgs||[]).length*60;
     const blendS=blendedSellRate(o.ls,o.rates,o.margins,o.fixedSell);
-    const plan=buildPlan(base,intgHrs,o.ktMo,o.calMo,o.totalYrs,0,blendS,o.cont);
+    const plan=buildPlan(base,intgHrs,o.ktMo,o.calMo,o.totalYrs,0,blendS,o.cont,o.ls,o.accelerators);
     return plan.reduce((s,r)=>s+r.sellWC,0);
   }catch(e){return 0;}
 }
