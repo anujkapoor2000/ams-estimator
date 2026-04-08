@@ -3,7 +3,7 @@
 
 import {T} from "../design.js";
 import {Card, Metric, SectionHead, Slider, Table, Badge, BarChart, ShoreBar, RaciBadge} from "../components/ui.jsx";
-import {LOCATIONS, ROLES, RISKS, DEFAULT_AI_ACCELERATORS, AI_GAIN_CURVE, COVERAGE_OPTIONS, buildPlan, calcBase, blendedCostRate, blendedSellRate, getSellRate, splitFTE, FTE_HRS} from "../store/appData.js";
+import {LOCATIONS, ROLES, RISKS, DEFAULT_AI_ACCELERATORS, AI_GAIN_CURVE, COVERAGE_OPTIONS, buildPlan, calcBase, blendedCostRate, blendedSellRate, getSellRate, splitFTERounded, roundFTE, FTE_HRS} from "../store/appData.js";
 
 // ─── Analytics ────────────────────────────────────────────────────────────────
 export function AnalyticsPage({opp,opps,sym,fxRate,currency}){
@@ -13,14 +13,14 @@ export function AnalyticsPage({opp,opps,sym,fxRate,currency}){
   const base=calcBase(mods||[],spS,spY,avgL2,avgL3,tkt);
   const blendC=blendedCostRate(ls,rates);
   const blendS=blendedSellRate(ls,rates,margins,fixedSell);
-  const plan=buildPlan(base,intgHrs,ktMo,calMo,totalYrs,blendC,blendS,cont);
+  const plan=buildPlan(base,intgHrs,ktMo,calMo,totalYrs,blendC,blendS,cont,ls,opp?.accelerators);
   const annualBase=base.totalL2+base.totalL3+base.totalEnh+intgHrs;
-  const totalFTE=Math.round(annualBase/FTE_HRS*10)/10;
+  const totalFTE=roundFTE(annualBase/FTE_HRS);
   const totSell=plan.reduce((s,r)=>s+r.sellWC,0);
   const totCost=plan.reduce((s,r)=>s+r.costWC,0);
   const totMargin=totSell-totCost;
   const blendedMarginPct=blendS>0?Math.round((blendS-blendC)/blendS*100):0;
-  const locFTEs=splitFTE(totalFTE,ls);
+  const locFTEs=splitFTERounded(totalFTE,ls);
   const hrsSaved=plan.reduce((s,r)=>s+(r.noAiHrs-r.totalH),0);
 
   return(
@@ -78,9 +78,9 @@ export function CostPage({opp,onUpdate,sym,fxRate,currency}){
   const blendC=blendedCostRate(ls,rates);
   const blendS=blendedSellRate(ls,rates,margins,fixedSell);
   const annualBase=base.totalL2+base.totalL3+base.totalEnh+intgHrs;
-  const totalFTE=Math.round(annualBase/FTE_HRS*10)/10;
-  const locFTEs=splitFTE(totalFTE,ls);
-  const plan=buildPlan(base,intgHrs,opp.ktMo,opp.calMo,opp.totalYrs,blendC,blendS,cont);
+  const totalFTE=roundFTE(annualBase/FTE_HRS);
+  const locFTEs=splitFTERounded(totalFTE,ls);
+  const plan=buildPlan(base,intgHrs,opp.ktMo,opp.calMo,opp.totalYrs,blendC,blendS,cont,ls,opp.accelerators);
   const totSell=plan.reduce((s,r)=>s+r.sellWC,0);
   const totCost=plan.reduce((s,r)=>s+r.costWC,0);
   const blendedMarginPct=blendS>0?Math.round((blendS-blendC)/blendS*100):0;
@@ -157,8 +157,8 @@ export function TeamPage({opp,onUpdate,sym}){
   const intgHrs=(intgs||[]).length*60;
   const base=calcBase(mods||[],spS,spY,avgL2,avgL3,tkt);
   const annualBase=base.totalL2+base.totalL3+base.totalEnh+intgHrs;
-  const totalFTE=Math.round(annualBase/FTE_HRS*10)/10;
-  const locFTEs=splitFTE(totalFTE,ls);
+  const totalFTE=roundFTE(annualBase/FTE_HRS);
+  const locFTEs=splitFTERounded(totalFTE,ls);
   const roleData=ROLES.map(r=>{const h=base.totalL2*r.l2w+base.totalL3*r.l3w+base.totalEnh*r.enhw+intgHrs*(r.key==="intg"?0.5:r.key==="sdm"?0.1:0);return{...r,hrs:Math.round(h),fte:Math.round(h/FTE_HRS*10)/10};}).filter(r=>r.fte>0);
 
   return(
@@ -232,7 +232,7 @@ export function AIPage({opp,sym,fxRate,currency}){
   const base=calcBase(mods||[],spS,spY,avgL2,avgL3,tkt);
   const blendC=blendedCostRate(ls,rates);
   const blendS=blendedSellRate(ls,rates,margins,fixedSell);
-  const plan=buildPlan(base,intgHrs,ktMo,calMo,totalYrs,blendC,blendS,cont);
+  const plan=buildPlan(base,intgHrs,ktMo,calMo,totalYrs,blendC,blendS,cont,ls,opp?.accelerators);
   const annualBase=base.totalL2+base.totalL3+base.totalEnh+intgHrs;
   const hrsSaved=plan.reduce((s,r)=>s+(r.noAiHrs-r.totalH),0);
   const impactColors={High:T.green,Medium:T.amber,Transformational:T.purple};
@@ -288,7 +288,7 @@ export function KTPage({opp,onUpdate,sym,fxRate,currency}){
   const base=calcBase(mods||[],spS,spY,avgL2,avgL3,tkt);
   const blendC=blendedCostRate(ls,rates);
   const blendS=blendedSellRate(ls,rates,margins,fixedSell);
-  const plan=buildPlan(base,intgHrs,ktMo,calMo,totalYrs,blendC,blendS,cont);
+  const plan=buildPlan(base,intgHrs,ktMo,calMo,totalYrs,blendC,blendS,cont,ls,opp?.accelerators);
 
   const KT_STEPS=[
     {mo:"Month 1",title:"Discovery & Shadow",color:T.amber,activities:["Onboard NTT DATA team across all delivery centres (incl. Alchemy NI)","Receive all docs: runbooks, architecture, Gosu code repos from incumbent","Shadow incidents across PC, CC, BC, Digital — observe triage & resolution","Map all "+intgHrs/60+" integrations: endpoints, auth, data flows","Establish GW Cloud access, ITSM credentials, monitoring tools","Interview incumbent: tribal knowledge capture sessions"],deliverable:"Discovery Report, Knowledge Gap Analysis"},
@@ -378,8 +378,8 @@ export function RACIPage({opp}){
   const intgHrs=(intgs||[]).length*60;
   const base=calcBase(mods||[],spS,spY,avgL2,avgL3,tkt);
   const annualBase=base.totalL2+base.totalL3+base.totalEnh+intgHrs;
-  const totalFTE=Math.round(annualBase/FTE_HRS*10)/10;
-  const locFTEs=splitFTE(totalFTE,ls);
+  const totalFTE=roundFTE(annualBase/FTE_HRS);
+  const locFTEs=splitFTERounded(totalFTE,ls);
   const roleData=ROLES.map(r=>{const h=base.totalL2*r.l2w+base.totalL3*r.l3w+base.totalEnh*r.enhw+intgHrs*(r.key==="intg"?0.5:r.key==="sdm"?0.1:0);return{...r,hrs:Math.round(h),fte:Math.round(h/FTE_HRS*10)/10};}).filter(r=>r.fte>0);
   const riskCol={High:T.red,Medium:T.amber,Low:T.green};
 
